@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  
+  <!-- Obtained from  https://developers.google.com/maps/documentation/javascript/examples/places-searchbox  --> 
+
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Places Search Box</title>
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #description {
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+      }
+
+      #infowindow-content .title {
+        font-weight: bold;
+      }
+
+      #infowindow-content {
+        display: none;
+      }
+
+      #map #infowindow-content {
+        display: inline;
+      }
+
+      .pac-card {
+        margin: 10px 10px 0 0;
+        border-radius: 2px 0 0 2px;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        outline: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        background-color: #fff;
+        font-family: Roboto;
+      }
+
+      #pac-container {
+        padding-bottom: 12px;
+        margin-right: 12px;
+      }
+
+      .pac-controls {
+        display: inline-block;
+        padding: 5px 11px;
+      }
+
+      .pac-controls label {
+        font-family: Roboto;
+        font-size: 13px;
+        font-weight: 300;
+      }
+
+      #pac-input {
+        background-color: #fff;
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+        margin-left: 12px;
+        padding: 0 11px 0 13px;
+        text-overflow: ellipsis;
+        width: 400px;
+      }
+
+      #pac-input:focus {
+        border-color: #4d90fe;
+      }
+
+
+	  <!-- This relates to the second search bar. --> 
+      .pac-card2 {
+        margin: 10px 10px 0 0;
+        border-radius: 2px 0 0 2px;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        outline: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        background-color: #fff;
+        font-family: Roboto;
+      }
+
+      #pac-container2 {
+        padding-bottom: 12px;
+        margin-right: 12px;
+      }
+
+      .pac-controls2 {
+        display: inline-block;
+        padding: 5px 11px;
+      }
+
+      .pac-controls2 label {
+        font-family: Roboto;
+        font-size: 13px;
+        font-weight: 300;
+      }
+
+      #pac-input2 {
+        background-color: #fff;
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+        margin-left: 12px;
+        padding: 0 11px 0 13px;
+        text-overflow: ellipsis;
+        width: 400px;
+      }
+
+      #pac-input2:focus {
+        border-color: #4d90fe;
+      }
+
+      #title {
+        color: #fff;
+        background-color: #4d90fe;
+        font-size: 25px;
+        font-weight: 500;
+        padding: 6px 12px;
+      }
+      #target {
+        width: 345px;
+      }
+    </style>
+  </head>
+  <body>
+									<!-- The first search bar. ---> 
+    <input id="pac-input" class="controls" type="text" placeholder="Search Address">
+	
+									<!-- The Current Location Button. ---> 
+	<button class="LocationButton" onclick="getLocation()">Current Location</button> 
+	
+									<!-- Small text to screen used for testing. Will be deleted later. --->  
+	<p id="demo">Test</p>  
+	
+									<!-- The Second search bar. ---> 
+	<input id="pac-input2" class="controls2" type="text" placeholder="Search Address">
+    <div id="map"></div>
+    <script>
+      // This example adds a search box to a map, using the Google Place Autocomplete
+      // feature. People can enter geographical searches. The search box will return a
+      // pick list containing a mix of places and predicted search terms.
+
+      // This example requires the Places library. Include the libraries=places
+      // parameter when you first load the API. For example:
+      // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
+
+      function initAutocomplete() {
+	  
+	  
+        var map = new google.maps.Map(document.getElementById('map'), {
+		center: {lat: 38.251767, lng: -85.753965},
+          zoom: 13,
+          mapTypeId: 'roadmap'
+        });
+
+ // Variables for the data inside the search boxes. 
+		var input = document.getElementById('pac-input');
+		var input2 = document.getElementById('pac-input2');
+
+		// SearchBox for users. 
+        var searchBox = new google.maps.places.SearchBox(input);
+        var searchBox2 = new google.maps.places.SearchBox(input2);
+
+		// Posision on where SearchBoxs are kept. 
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input2);
+
+
+
+        // Bias the SearchBox results towards current map's viewport.
+        map.addListener('bounds_changed', function() {
+          searchBox.setBounds(map.getBounds());
+		  searchBox2.setBounds(map.getBounds())
+		
+        });		 
+
+        var markers = [];
+        // Listen for the event fired when the user selects a prediction and retrieve
+        // more details for that place.
+        searchBox.addListener('places_changed', function() {
+          var places = searchBox.getPlaces();
+
+          if (places.length == 0) {
+            return;
+          }
+
+          // Clear out the old markers.
+          markers.forEach(function(marker) {
+            marker.setMap(null);
+          });
+          markers = [];
+
+          // For each place, get the icon, name and location.
+          var bounds = new google.maps.LatLngBounds();
+          places.forEach(function(place) {
+            if (!place.geometry) {
+              console.log("Returned place contains no geometry");
+              return;
+            }
+            var icon = {
+              url: place.icon,
+              size: new google.maps.Size(71, 71),
+              origin: new google.maps.Point(0, 0),
+              anchor: new google.maps.Point(17, 34),
+              scaledSize: new google.maps.Size(25, 25)
+            };
+
+            // Create a marker for each place.
+            markers.push(new google.maps.Marker({
+              map: map,
+              icon: icon,
+              title: place.name,
+              position: place.geometry.location
+            }));
+
+            if (place.geometry.viewport) {
+              // Only geocodes have viewport.
+              bounds.union(place.geometry.viewport);
+            } else {
+              bounds.extend(place.geometry.location);
+            }
+          });
+          map.fitBounds(bounds);
+        });
+      
+		var markers2 = [];
+
+		 // Adding listener for when the user enters text into the search box.  
+		searchBox2.addListener('places_changed', function() {
+        var places2 = searchBox2.getPlaces();
+
+          if (places2.length == 0) {
+            return;
+          }
+
+          // Clear out the old markers2.
+          markers2.forEach(function(marker) {
+            marker.setMap(null);
+          });
+          markers2 = [];
+
+          // For each place, get the icon, name and location.
+          var bounds = new google.maps.LatLngBounds();
+          places2.forEach(function(places2) {
+            if (!places2.geometry) {
+              console.log("Returned places2 contains no geometry");
+              return;
+            }
+            var icon = {
+              url: places2.icon,
+              size: new google.maps.Size(71, 71),
+              origin: new google.maps.Point(0, 0),
+              anchor: new google.maps.Point(17, 34),
+              scaledSize: new google.maps.Size(25, 25)
+            };
+
+            // Create a marker for each places2.
+            markers2.push(new google.maps.Marker({
+              map: map,
+              icon: icon,
+              title: places2.name,
+              position: places2.geometry.location
+            }));
+
+            if (places2.geometry.viewport) {
+              // Only geocodes have viewport.
+              bounds.union(places2.geometry.viewport);
+            } else {
+              bounds.extend(places2.geometry.location);
+            }
+          });
+          map.fitBounds(bounds);
+        });
+		
+		
+      } // End of  function initAutocomplete(); 
+	  
+
+
+<!-- Function that is called when the btn is clicked, asks for permission then calls another function.  --> 
+	function getLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(CapturePosition); 
+	} 
+  else { 
+    x.innerHTML = "Geolocation is not supported by this browser.";
+  }
+  }
+  
+  // Function used from the button to capture the lat and lon of the user then puts them into global variables. 
+  function CapturePosition(position) { 
+	Geolocation_Lat = position.coords.latitude; 
+	Geolocation_Long = position.coords.longitude; 
+	CustomMarker = false;  // Sets it to false to fall into other tree. 
+	initAutocomplete();   // runs the function to re-pin onto the map using the users location instead of user's subbmission. 
+
+  }; 
+		// This code will take the lat and lon from the user then convert it into gelocation for the initAutocomplete to use. 
+      
+		/*************************************************************************************************************************** 
+		
+		This is where the problem comes into place, I have to use the geocoder, map and infowindow. Whenever The function is called 
+		this will bring out the error: Cannot read property 'ownerDocument' of null, Im unsure if its becasue of geocoder, I tried 
+		to take what geocoder had and place it into a placeholder variable to later be used over and over but that failed, I also
+		thing somthing doesnt work correctly when it calls map again and redesigns the map. 
+		
+		***************************************************************************************************************************/ 
+	  function geocodeLatLng(geocoder, map, infowindow) {
+        var latlng = {lat: parseFloat(Geolocation_Lat[0]), lng: parseFloat(Geolocation_Long[1])};
+        geocoder.geocode({'location': latlng}, function(results, status) {
+          if (status === 'OK') {
+            if (results[0]) {
+              map.setZoom(13);
+              var marker = new google.maps.Marker({
+                position: latlng,
+                map: map
+              });
+              infowindow.setContent(results[0].formatted_address);
+              infowindow.open(map, marker);
+            } else {
+              window.alert('No results found');
+            }
+          } else {
+            window.alert('Geocoder failed due to: ' + status);
+          }
+        })}; 
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyATVSleGuv4mfMl2ZDuctk6x66EUSrxdNE&libraries=places&callback=initAutocomplete"
+         async defer></script>
+  </body>
+</html>
