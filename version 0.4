@@ -1,0 +1,280 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+   <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+	
+	<style> 
+	html,
+	body { 
+	height: 100%; 
+	background: cornflowerblue;
+	} 
+		
+	#Container {
+    width: 40%;
+    height: 200px;
+    background: cornflowerblue;
+    padding-right: 99%; 
+	padding-bottom: 39%;
+	}	
+	
+	.footer {
+	  position: fixed;
+	  left: 0;
+	  bottom: 0;
+	  width: 100%;
+	  background-color: red;
+	  color: white;
+	  
+	}
+	
+	#title_div { 
+		text-align: center; 	
+	position: absolute;
+    width: 97%;
+    background: Coral;
+    height: 4%;
+	font-size: x-large; 
+	  border: 1px solid;
+	padding: 12px;
+	<!-- box-shadow: 5px 10px; --> 
+	
+	} 
+	
+	#Search_bar_div { 
+	margin-left: 0%;
+    height: 30%;
+   
+    position: absolute;
+    width: 40%;
+	margin-top: 4%; 
+	} 
+	
+	#map { 
+	margin-left: 40%;
+    height: 82%;
+    background: yellow;
+    position: absolute;
+    width: 57%;
+	margin-top: 4%; 
+	border: 10px solid black; 
+
+}	
+	
+	#Entries_div { 
+	
+	position: absolute; 
+	width: 40%; 
+	height: 56%; 
+	margin-top: 18%;
+	overflow: scroll;	
+	} 
+	
+	input[type="text"] {
+    display: block;
+    margin : 0 auto;
+	position: relative;
+	top: 20%;
+    width: 95%;
+	height: 20%;
+	font-size: 1vw; 
+        }
+		
+	#SubmitAddress { 
+	margin-top: 15%; 
+	margin-left: 40%; 
+	} 	
+	
+	#Entry_List { 
+	color: white; 
+	list-style-type: none;
+	line-height: 2em; 
+	font-size : 2em; 
+	} 
+	
+	.Button_Style { 
+	  background-color: #4CAF50;
+	  border: none;
+	  color: white;
+	  padding: 15px 32px;
+	  text-align: center;
+	  text-decoration: none;
+	  display: inline-block;
+	  font-size: 16px;
+	  margin: 4px 10%;
+	  cursor: pointer;
+	  text
+	} 
+
+	</style> 
+	
+  </head> 
+  
+<body> 
+  
+  
+  <selection id="Container"> 
+
+<div id="title_div">   
+  <p center> Google Map API </p /center> 
+</div> 
+  <div id="Search_bar_div"> 
+   <input id="SearchAddress" type="text" class="controls" placeholder="Please Enter a address.">
+   <button class="Button_Style" id="SubmitAddress" type="Button" onclick="CheckSearchInput()"> Add Address</button>  
+ </div> 
+  
+    <div id="map"></div> 
+    
+    <div id="Entries_div">
+	
+		<ol id="Entry_List"> 
+		</ol>
+		
+	</div> 
+</selection> 
+ 
+    <div class="footer"> 
+     <button class="Button_Style" id="Display_GoogleMapBtn" onclick="HideMap_ExtendSearch_Entry_div()" >Hide Google Map</button> 
+	 <button class="Button_Style" id="ImportAddressBtn"  >Import Address</button> 
+     <button class="Button_Style" id="ExportAddressBtn"  >Export Address</button> 
+
+  
+  </div>
+ 
+  
+  
+  <script> 
+  
+  
+	function initAutocomplete() { 
+		
+		// Display the map 
+		var map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: 38.251767, lng: -85.753965},
+          zoom: 13,
+          mapTypeId: 'roadmap'
+        });
+	
+		// Obtain user search and data. 
+		var input = document.getElementById('SearchAddress');
+        var searchBox = new google.maps.places.SearchBox(input);
+
+
+		var markers = [];
+		searchBox.addListener('places_changed', function() {
+          var places = searchBox.getPlaces();
+
+          if (places.length == 0) {
+            return;
+          }
+
+          // Clear out the old markers.
+          markers.forEach(function(marker) {
+            marker.setMap(null);
+          });
+          markers = [];
+	
+
+          // For each place, get the icon, name and location.
+          var bounds = new google.maps.LatLngBounds();
+          places.forEach(function(place) {
+            if (!place.geometry) {
+              console.log("Returned place contains no geometry");
+              return;
+            }
+            var icon = {
+              url: place.icon,
+              size: new google.maps.Size(71, 71),
+              origin: new google.maps.Point(0, 0),
+              anchor: new google.maps.Point(17, 34),
+              scaledSize: new google.maps.Size(25, 25)
+            };
+
+            // Create a marker for each place.
+            markers.push(new google.maps.Marker({
+              map: map,
+              icon: icon,
+              title: place.name,
+              position: place.geometry.location
+            }));
+
+            if (place.geometry.viewport) {
+              // Only geocodes have viewport.
+              bounds.union(place.geometry.viewport);
+            } else {
+              bounds.extend(place.geometry.location);
+            }
+          });
+          map.fitBounds(bounds);
+         	  });
+	} // End of initAutocomplete Function. 
+	
+	function CheckSearchInput() { 
+		var CheckInput = document.getElementById("SearchAddress").value; 
+		if ( CheckInput === "") { 
+		alert(" Please enter an address. ");
+		} else { 
+		EntryAdd(); 	
+		} 
+	} 
+	  
+	    function EntryAdd() {
+        let input = document.getElementById("SearchAddress");
+        let text = input.value;
+        let newLi = document.createElement("li");
+        newLi.textContent = text + " ";
+        let deleteLink = document.createElement("a");
+        deleteLink.textContent = "[Delete]";
+        deleteLink.href = "#";
+        deleteLink.addEventListener("click", deleteItem);
+        newLi.appendChild(deleteLink);
+ 
+        document.getElementById("Entry_List").appendChild(newLi);
+        input.value = "";
+ 
+        function deleteItem() {
+		confirm("Are you sure you want to delete this address: \n" +
+				 );
+		if (confirm === "true") { 
+            document.getElementById("Entry_List").removeChild(newLi);
+        }
+		else { 
+		
+		} 
+    }
+	}
+	
+	// Function that hides the Map div and extends the Entry and Search divs to the center. 
+	function HideMap_ExtendSearch_Entry_div() { 
+		  var x = document.getElementById("map");
+		  if (x.style.display === "none") {
+		  	  
+			x.style.display = "block";
+			document.getElementById("Display_GoogleMapBtn").innerHTML = "Hide Google Map";
+			document.getElementById("Search_bar_div").style.marginLeft = "0%";
+			document.getElementById("Entries_div").style.width = "40%";
+
+
+			
+		  } else {
+			x.style.display = "none";
+			document.getElementById("Display_GoogleMapBtn").innerHTML = "Show Google Map";
+			document.getElementById("Search_bar_div").style.marginLeft = "30%";
+			document.getElementById("Entries_div").style.width = "99%";
+
+
+
+		  }
+	} 
+	 
+  </script> 
+  
+  <!-- API Key--> 
+  <script src="https://maps.googleapis.com/maps/api/js?key= --Google API Key-- &libraries=places&callback=initAutocomplete"async defer></script>
+	
+  
+  
+</body>
+</html>
