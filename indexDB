@@ -1,0 +1,73 @@
+
+
+	// Making sure its available to all browsers and set to the same variable. 
+window.indexDB = window.indexDB || window.mozIndexDB || window.webkitIndexDB || window.msIndexdDB; 
+
+	// checking if indexDB is available. 
+	
+	if (!window.indexDB) { 
+	alert("IndexDB is not available, please seek IT professional."); 
+	} 
+	
+	
+	// Request will open the database. 
+			// Next we need to implement the name of the database (QuizQuestDatabse) followed by the version number. 
+	let request = window.indexDB.open("QuizQuestDatabse", 1), 
+	db,   // This will refer to our database  
+	tx, 	// refers to transactions 
+	store, // This will refer to storing our data. 
+	index;   // Index used to cycle through or find a specific data. 
+	
+	
+	// fired when a new version or database is created. 
+	// If the database is opened then we also need a way to funnel the version number and update the data. 
+	request.onupgradenned = function(e) { 
+		let db = request.result; 
+			store = db.createObjectStore("QuizQuestDatabse", {keyPath: "Keyid" }), 
+			
+			index = store.createIndex("QuestionText", "questionText", {unique: false}); 
+	} 
+	
+	// We need to create a handler for these events. 
+	// e paramater used to capture the error. 
+	request.onerror = function(e) { 
+		console.log("There was an error" + e.target.errorCode)
+	};
+
+	// No errors found proceed to the database. 
+	request.onsuccess = function(e) { 
+		db = request.result; // set db to equal our database. 
+		tx = db.transaction("QuestionStore", "readwrite");
+		store = tx.objectStore("QuestionStore");
+		index = store.index("QuestionText"); 
+	
+	// I want to see an error 
+	db.onerror = function(e) { 
+		console.log("ERROR	" + e.target.errorCode); 
+	}
+/*
+	// Store data from the database itself. 
+	store.put({Keyid: 1, QuestionText: "The sky is blue.", correctAnswer: true, studentAnswer: true, result: true }); 		
+
+	store.put({Keyid: 2, QuestionText: "The grass is blue.", correctAnswer: false, studentAnswer: true, result: true }); 		
+*/ 
+	let q1 = store.get(1); 
+	let qs = index.get("The grass is green"); 
+	
+	q1.onsuccess = function() { 
+		console.log(q1.result);
+		console.log(q1.QuestionText); 
+		
+	} 
+	qs.onsuccess = function() { 
+		console.log(qs.QuestionText);		
+	} 
+	
+	
+	tx.oncomplete = function() { 
+	db.close(); 
+	};  
+}
+	
+		
+ 
